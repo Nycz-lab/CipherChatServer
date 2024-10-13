@@ -3,7 +3,7 @@ name: CiperChatServer Build Action
 
 on:
   release:
-    types: [created]
+    types: [published]
 
 jobs:
   release:
