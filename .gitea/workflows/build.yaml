@@ -1,24 +1,46 @@
-name: CiperChatServer Build Action
-# .github/workflows/release.yml
+on: [push, pull_request]
 
-on:
-  push:
-    branches: [created,ci_cd]
+name: Continuous integration
 
 jobs:
-  release:
-    name: release ${{ matrix.target }}
-    runs-on: rust
-    strategy:
-      fail-fast: false
-      matrix:
-        target: [x86_64-pc-windows-gnu, x86_64-unknown-linux-musl]
+  check:
+    name: Check
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@master
-      - name: Compile and release
-        uses: rust-build/rust-build.action@v1.4.5
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          RUSTTARGET: ${{ matrix.target }}
-          EXTRA_FILES: "README.md LICENSE"
+      - uses: actions/checkout@v4
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+      - run: cargo check
+
+  test:
+    name: Test Suite
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+      - run: cargo test
+
+  fmt:
+    name: Rustfmt
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+      - run: rustup component add rustfmt
+      - run: cargo fmt --all -- --check
+
+  clippy:
+    name: Clippy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+      - run: rustup component add clippy
+      - run: cargo clippy -- -D warnings
+  
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+      - run: cargo build
