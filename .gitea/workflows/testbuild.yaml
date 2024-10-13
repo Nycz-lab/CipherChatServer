@@ -2,8 +2,8 @@ name: CiperChatServer Build Action
 # .github/workflows/release.yml
 
 on:
-  push:
-    branches: [created,ci_cd]
+  release:
+    types: [created]
 
 jobs:
   release:
