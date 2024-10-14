@@ -159,7 +159,7 @@ async fn accept_connection(
         }
     }
 
-    println!("done with all teh shit");
+    info!("connection ended");
 
     // // We should not forward messages other than text or binary.
     // read.try_filter(|msg| future::ready(msg.is_text() || msg.is_binary()))
@@ -239,7 +239,7 @@ async fn login(
                 content_type: "auth".to_string(),
                 content: "Login successful".to_string(),
                 timestamp: getTimestamp(),
-                auth: Some(OpAuthPayload{ action: "login".to_string(), user: username.to_string(), password: "".to_string() }),
+                auth: Some(OpAuthPayload{ action: "login".to_string(), user: username.to_string(), password: "".to_string(), keybundle: None }),
                 token: token.to_string(),
                 author: "System".to_string(),
                 recipient: username.to_string(),
@@ -267,7 +267,7 @@ async fn login(
                 content_type: "auth".to_string(),
                 content: format!("Login failed: {}", error).to_string(),
                 timestamp: getTimestamp(),
-                auth: Some(OpAuthPayload{ action: "login".to_string(), user: username.to_string(), password: "".to_string() }),
+                auth: Some(OpAuthPayload{ action: "login".to_string(), user: username.to_string(), password: "".to_string(), keybundle: None }),
                 token: "".to_string(),
                 author: "System".to_string(),
                 recipient: username.to_string(),
@@ -285,10 +285,11 @@ async fn register(
     write: &mut WsWrite,
     read: &mut WsRead,
 ) {
-    println!("reg req");
+    info!("requested register");
 
     let username = auth.user.as_str();
     let password = auth.password.as_str();
+    let keybundle = auth.keybundle.unwrap();
 
     // TODO: Implement register logic using user_db.register_user(username, password)
 
@@ -296,14 +297,14 @@ async fn register(
     match user_db
         .lock()
         .await
-        .register_user(username.to_string(), password.to_string())
+        .register_user(username.to_string(), password.to_string(), keybundle)
     {
         Ok(token) => {
             let msg = MsgPayload {
                 content_type: "auth".to_string(),
                 content: "Registration successful".to_string(),
                 timestamp: getTimestamp(),
-                auth: Some(OpAuthPayload{ action: "register".to_string(), user: username.to_string(), password: "".to_string() }),
+                auth: Some(OpAuthPayload{ action: "register".to_string(), user: username.to_string(), password: "".to_string(), keybundle: None }),
                 token: token.to_string(),
                 author: "System".to_string(),
                 recipient: username.to_string(),
@@ -333,7 +334,7 @@ async fn register(
                 content_type: "auth".to_string(),
                 content: format!("Registration failed {}", error).to_string(),
                 timestamp: getTimestamp(),
-                auth: Some(OpAuthPayload{ action: "register".to_string(), user: username.to_string(), password: "".to_string() }),
+                auth: Some(OpAuthPayload{ action: "register".to_string(), user: username.to_string(), password: "".to_string(), keybundle: None }),
                 token: "".to_string(),
                 author: "System".to_string(),
                 recipient: username.to_string(),

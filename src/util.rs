@@ -16,6 +16,20 @@ pub struct MsgPayload{
 pub struct OpAuthPayload{
   pub action: String,
   pub user: String,
-  pub password: String
+  pub password: String,
+  pub keybundle: Option<KeyBundle>
 }
 
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct KeyBundle{
+  pub identity: KeyPairB64,
+  pub prekey: KeyPairB64,
+  pub signature: KeyPairB64,
+  pub onetime_keys: Vec<KeyPairB64>
+}
+
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct KeyPairB64{
+  pub public: String,
+  pub private: Option<String>
+}
