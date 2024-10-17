@@ -169,22 +169,24 @@ async fn accept_connection(
 }
 
 async fn message_handler(
-    message: MsgPayload,
+    mut message: MsgPayload,
     user_db: &Arc<tokio::sync::Mutex<UserDatabase>>,
     session_db: SessionInfo,
     write: &mut WsWrite,
     read: &mut WsRead,
 ) {
-    if let Some(auth) = message.auth {
+    
+    if let Some(auth) = message.clone().auth {
         println!("is auth req");
 
         match auth.action.as_str() {
             "login" => login(auth, user_db, session_db, write, read).await,
             "register" => register(auth, user_db, session_db, write, read).await,
+            "fetch_bundle" => fetch_bundle(message.clone(), user_db, session_db, write, read).await,
             _ => println!("no such auth action"),
         }
     }else{
-        if message.content_type == "message" && message.recipient != "" && message.token != "" {
+        if message.recipient != "" && message.token != "" {
             route_message(message, user_db, session_db, write).await;
         }
     }
@@ -236,10 +238,9 @@ async fn login(
     {
         Ok(token) => {
             let answer = MsgPayload {
-                content_type: "auth".to_string(),
-                content: "Login successful".to_string(),
+                content: None,
                 timestamp: getTimestamp(),
-                auth: Some(OpAuthPayload{ action: "login".to_string(), user: username.to_string(), password: "".to_string(), keybundle: None }),
+                auth: Some(OpAuthPayload{ message:"Login successful".to_string(), action: "login".to_string(), user: username.to_string(), password: "".to_string(), keybundle: None }),
                 token: token.to_string(),
                 author: "System".to_string(),
                 recipient: username.to_string(),
@@ -264,10 +265,9 @@ async fn login(
         }
         Err(error) => {
             let answer = MsgPayload {
-                content_type: "auth".to_string(),
-                content: format!("Login failed: {}", error).to_string(),
+                content: None,
                 timestamp: getTimestamp(),
-                auth: Some(OpAuthPayload{ action: "login".to_string(), user: username.to_string(), password: "".to_string(), keybundle: None }),
+                auth: Some(OpAuthPayload{ message:format!("Login failed: {}", error).to_string(), action: "login".to_string(), user: username.to_string(), password: "".to_string(), keybundle: None }),
                 token: "".to_string(),
                 author: "System".to_string(),
                 recipient: username.to_string(),
@@ -301,10 +301,9 @@ async fn register(
     {
         Ok(token) => {
             let msg = MsgPayload {
-                content_type: "auth".to_string(),
-                content: "Registration successful".to_string(),
+                content: None,
                 timestamp: getTimestamp(),
-                auth: Some(OpAuthPayload{ action: "register".to_string(), user: username.to_string(), password: "".to_string(), keybundle: None }),
+                auth: Some(OpAuthPayload{ message:"Registration successful".to_string(), action: "register".to_string(), user: username.to_string(), password: "".to_string(), keybundle: None }),
                 token: token.to_string(),
                 author: "System".to_string(),
                 recipient: username.to_string(),
@@ -331,13 +330,62 @@ async fn register(
         }
         Err(error) => {
             let msg = MsgPayload {
-                content_type: "auth".to_string(),
-                content: format!("Registration failed {}", error).to_string(),
+                content: None,
                 timestamp: getTimestamp(),
-                auth: Some(OpAuthPayload{ action: "register".to_string(), user: username.to_string(), password: "".to_string(), keybundle: None }),
+                auth: Some(OpAuthPayload{ message: format!("Registration failed {}", error).to_string(), action: "register".to_string(), user: username.to_string(), password: "".to_string(), keybundle: None }),
                 token: "".to_string(),
                 author: "System".to_string(),
                 recipient: username.to_string(),
+            };
+            let json = serde_json::to_string(&msg).unwrap();
+            write.lock().await.send(Message::Text(json)).await.unwrap();
+        }
+    }
+}
+
+async fn fetch_bundle(
+    mut og_msg: MsgPayload,
+    user_db: &Arc<tokio::sync::Mutex<UserDatabase>>,
+    session_db: SessionInfo,
+    write: &mut WsWrite,
+    read: &mut WsRead,
+) {
+    info!("requested bundle fetch");
+
+    og_msg.author = session_db.WsRcvr.lock().await.get(&og_msg.token).unwrap().to_string();
+
+    let auth = og_msg.auth.unwrap();
+
+    let username = auth.user.as_str();
+
+    match user_db
+        .lock()
+        .await
+        .fetch_bundle(username.to_string())
+    {
+        Ok(bundle) => {
+            let msg = MsgPayload {
+                content: None,
+                timestamp: getTimestamp(),
+                auth: Some(OpAuthPayload{ message:"fetched bundle".to_string(), action: "fetch_bundle".to_string(), user: username.to_string(), password: "".to_string(), keybundle: Some(bundle) }),
+                token: og_msg.token.to_string(),
+                author: "System".to_string(),
+                recipient: og_msg.author.to_string(),
+            };
+            let json = serde_json::to_string(&msg).unwrap();
+            write.lock().await.send(Message::Text(json)).await.unwrap();
+
+
+            // println!("sessions: {:#?}", session_db.lock().await);
+        }
+        Err(error) => {
+            let msg = MsgPayload {
+                content: None,
+                timestamp: getTimestamp(),
+                auth: Some(OpAuthPayload{ message: format!("fetching bundle failed {}", error).to_string(), action: "fetch_bundle".to_string(), user: username.to_string(), password: "".to_string(), keybundle: None }),
+                token: "".to_string(),
+                author: "System".to_string(),
+                recipient: og_msg.author.to_string(),
             };
             let json = serde_json::to_string(&msg).unwrap();
             write.lock().await.send(Message::Text(json)).await.unwrap();
