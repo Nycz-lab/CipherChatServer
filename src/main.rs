@@ -176,8 +176,10 @@ async fn message_handler(
     read: &mut WsRead,
 ) {
     
-    if let Some(auth) = message.clone().auth {
+    if message.clone().auth.is_some() && message.content.is_none() {
         println!("is auth req");
+
+        let auth = message.clone().auth.unwrap();
 
         match auth.action.as_str() {
             "login" => login(auth, user_db, session_db, write, read).await,
