@@ -365,16 +365,18 @@ impl CipherNode {
     ) {
         info!("requested bundle fetch");
 
-        if !self.user_db.lock().await.user_exists(og_msg.recipient.clone()) {
-            info!("non existent user requested");
-            return;
-        }
+        
 
         og_msg.author = self.username.clone().unwrap();
 
         let auth = og_msg.auth.unwrap();
 
         let username = auth.user.as_str();
+
+        if !self.user_db.lock().await.user_exists(username.to_string()) {
+            info!("non existent user requested");
+            return;
+        }
 
         match self.user_db.lock().await.fetch_bundle(username.to_string()) {
             Ok(bundle) => {
