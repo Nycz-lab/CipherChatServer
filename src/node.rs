@@ -152,7 +152,7 @@ impl CipherNode {
     }
 
     async fn route_message(
-        &self,
+        &mut self,
         mut message: MsgPayload
     ) {
         if !self.user_db.lock().await.user_exists(message.recipient.clone()) {
@@ -167,9 +167,19 @@ impl CipherNode {
             },
         };
 
-        message.author = username;
+        message.author = username.clone();
+
+        // IMPORTANT without this the lock will never be aquired
+        // if one messages themselves so the server will wait indefinitely
+        if message.recipient == username{
+
+            self.send_message(message).await;
+            return;
+        }
+
 
         let mut x = self.session_db.lock().await;
+
 
         match x.get_mut(&message.recipient){
             Some(node) => {
