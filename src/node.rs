@@ -155,6 +155,10 @@ impl CipherNode {
         &mut self,
         mut message: MsgPayload
     ) {
+        if !self.authenticated{
+            return;
+        }
+
         if !self.user_db.lock().await.user_exists(message.recipient.clone()) {
             info!("non existent user requested");
             return;
@@ -231,6 +235,7 @@ impl CipherNode {
                         user: username.to_string(),
                         password: "".to_string(),
                         keybundle: None,
+                        success: Some(true)
                     }),
                     message_id: uuid::Uuid::new_v4().to_string(),
                     author: "System".to_string(),
@@ -275,6 +280,7 @@ impl CipherNode {
                         user: username.to_string(),
                         password: "".to_string(),
                         keybundle: None,
+                        success: Some(false)
                     }),
                     message_id: uuid::Uuid::new_v4().to_string(),
                     author: "System".to_string(),
@@ -332,6 +338,7 @@ impl CipherNode {
                         user: username.to_string(),
                         password: "".to_string(),
                         keybundle: None,
+                        success: Some(true)
                     }),
                     message_id: uuid::Uuid::new_v4().to_string(),
                     author: "System".to_string(),
@@ -357,6 +364,7 @@ impl CipherNode {
                         user: username.to_string(),
                         password: "".to_string(),
                         keybundle: None,
+                        success: Some(false)
                     }),
                     message_id: uuid::Uuid::new_v4().to_string(),
                     author: "System".to_string(),
@@ -373,9 +381,11 @@ impl CipherNode {
         &self,
         mut og_msg: MsgPayload
     ) {
-        info!("requested bundle fetch");
-
+        if !self.authenticated{
+            return;
+        }
         
+        info!("requested bundle fetch");
 
         og_msg.author = self.username.clone().unwrap();
 
@@ -399,6 +409,7 @@ impl CipherNode {
                         user: username.to_string(),
                         password: "".to_string(),
                         keybundle: Some(bundle),
+                        success: Some(true)
                     }),
                     message_id: uuid::Uuid::new_v4().to_string(),
                     author: "System".to_string(),
@@ -421,6 +432,7 @@ impl CipherNode {
                         user: username.to_string(),
                         password: "".to_string(),
                         keybundle: None,
+                        success: Some(false)
                     }),
                     message_id: uuid::Uuid::new_v4().to_string(),
                     author: "System".to_string(),

@@ -17,7 +17,8 @@ pub struct OpAuthPayload{
   pub user: String,
   pub password: String,
   pub keybundle: Option<KeyBundle>,
-  pub message: String
+  pub message: String,
+  pub success: Option<bool>,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
