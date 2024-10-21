@@ -6,7 +6,7 @@ pub struct MsgPayload{
   pub content: Option<MsgContent>,
   pub timestamp: u64,
   pub auth: Option<OpAuthPayload>,
-  pub token: String,
+  pub message_id: String,
   pub author: String,
   pub recipient: String
 }

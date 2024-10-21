@@ -108,7 +108,10 @@ impl CipherNode {
 
     pub async fn cleanup(&mut self) {
         // let x = session_db.WsSender.lock().await;
-
+        if self.username.is_none(){
+            return;
+        }
+        
         let x = self.session_db.clone();
         x.lock().await.remove(&self.username.clone().unwrap());
 
@@ -133,7 +136,7 @@ impl CipherNode {
                 _ => println!("no such auth action"),
             }
         } else {
-            if message.recipient != "" && message.token != "" {
+            if message.recipient != "" {
                 self.route_message(message).await;
             }
         }
@@ -219,7 +222,7 @@ impl CipherNode {
                         password: "".to_string(),
                         keybundle: None,
                     }),
-                    token: token.to_string(),
+                    message_id: uuid::Uuid::new_v4().to_string(),
                     author: "System".to_string(),
                     recipient: username.to_string(),
                 };
@@ -263,7 +266,7 @@ impl CipherNode {
                         password: "".to_string(),
                         keybundle: None,
                     }),
-                    token: "".to_string(),
+                    message_id: uuid::Uuid::new_v4().to_string(),
                     author: "System".to_string(),
                     recipient: username.to_string(),
                 };
@@ -320,7 +323,7 @@ impl CipherNode {
                         password: "".to_string(),
                         keybundle: None,
                     }),
-                    token: token.to_string(),
+                    message_id: uuid::Uuid::new_v4().to_string(),
                     author: "System".to_string(),
                     recipient: username.to_string(),
                 };
@@ -345,7 +348,7 @@ impl CipherNode {
                         password: "".to_string(),
                         keybundle: None,
                     }),
-                    token: "".to_string(),
+                    message_id: uuid::Uuid::new_v4().to_string(),
                     author: "System".to_string(),
                     recipient: username.to_string(),
                 };
@@ -361,6 +364,11 @@ impl CipherNode {
         mut og_msg: MsgPayload
     ) {
         info!("requested bundle fetch");
+
+        if !self.user_db.lock().await.user_exists(og_msg.recipient.clone()) {
+            info!("non existent user requested");
+            return;
+        }
 
         og_msg.author = self.username.clone().unwrap();
 
@@ -380,7 +388,7 @@ impl CipherNode {
                         password: "".to_string(),
                         keybundle: Some(bundle),
                     }),
-                    token: og_msg.token.to_string(),
+                    message_id: uuid::Uuid::new_v4().to_string(),
                     author: "System".to_string(),
                     recipient: og_msg.author.to_string(),
                 };
@@ -402,7 +410,7 @@ impl CipherNode {
                         password: "".to_string(),
                         keybundle: None,
                     }),
-                    token: "".to_string(),
+                    message_id: uuid::Uuid::new_v4().to_string(),
                     author: "System".to_string(),
                     recipient: og_msg.author.to_string(),
                 };
