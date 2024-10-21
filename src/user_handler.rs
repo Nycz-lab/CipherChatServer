@@ -114,6 +114,23 @@ impl UserDatabase {
         }
     }
 
+    pub fn user_exists(&self, username: String) -> bool{
+
+        let conn = self.conn.lock().unwrap();
+        let mut stmt = conn.prepare("SELECT name FROM users WHERE name = ?").unwrap();
+
+        let rows: Vec<Result<String, rusqlite::Error>> = stmt.query_map(params![username], |row| {
+            Ok(row.get(0).unwrap())
+        }).unwrap().collect();
+        
+
+        if rows.len() > 0{
+            return true;
+        }
+
+        false
+    }
+
     pub fn fetch_bundle(&self, username: String) -> Result<KeyBundle, String> {
         let conn = self.conn.lock().unwrap();
 
