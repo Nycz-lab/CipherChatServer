@@ -67,7 +67,7 @@ impl UserDatabase {
 
         match conn.execute(&query, []) {
             Ok(_) => {
-                println!("successfully registered bundle!");
+                debug!("successfully registered bundle!");
             }
             Err(e) => {
                 println!("Error {}", e);
