@@ -1,10 +1,6 @@
 use std::{collections::HashMap, net::SocketAddr, sync::Arc, thread};
 
-<<<<<<< HEAD
-use log::info;
-=======
 use log::{debug, info};
->>>>>>> dev1
 use tokio::net::TcpStream;
 use tokio::sync::Mutex;
 use tokio_rustls::rustls::{Certificate, PrivateKey};
@@ -88,11 +84,7 @@ impl CipherNode {
                 Message::Text(txt) => {
                     // write.send(Message::Text(format!("Echo: {txt}"))).await.unwrap();
                     let msg: MsgPayload = serde_json::from_str(&txt).unwrap();
-<<<<<<< HEAD
-                    println!("received: {:?}", msg);
-=======
                     debug!("received: {:?}", msg);
->>>>>>> dev1
                     node_ref.clone().lock().await.message_handler(
                         msg,
                         node_ref.clone()
@@ -131,11 +123,7 @@ impl CipherNode {
         node_ref: Arc<Mutex<CipherNode>>
     ) {
         if message.clone().auth.is_some() && message.content.is_none() {
-<<<<<<< HEAD
-            println!("is auth req");
-=======
             debug!("is auth req");
->>>>>>> dev1
 
             let auth = message.clone().auth.unwrap();
 
@@ -171,11 +159,8 @@ impl CipherNode {
             return;
         }
 
-<<<<<<< HEAD
-=======
         debug!("routing message");
 
->>>>>>> dev1
         if !self.user_db.lock().await.user_exists(message.recipient.clone()) {
             info!("non existent user requested");
             return;
@@ -198,17 +183,11 @@ impl CipherNode {
             return;
         }
 
-<<<<<<< HEAD
-
-        let mut x = self.session_db.lock().await;
-
-=======
         
         
         let mut x = self.session_db.lock().await;
         
         debug!("successfully aquired session lock");
->>>>>>> dev1
 
         match x.get_mut(&message.recipient){
             Some(node) => {
@@ -234,8 +213,6 @@ impl CipherNode {
         // TODO proper error handling and shit
     }
 
-<<<<<<< HEAD
-=======
     async fn logout(&mut self){
         let username = self.username.clone().unwrap();
         debug!("logging {} out", username);
@@ -251,22 +228,17 @@ impl CipherNode {
 
     }
 
->>>>>>> dev1
     async fn login(
         &mut self,
         auth: OpAuthPayload,
         node_ref: Arc<Mutex<CipherNode>>
     ) {
-<<<<<<< HEAD
-        println!("login req");
-=======
         debug!("login req");
 
         if self.authenticated{
             self.logout().await;
         }
 
->>>>>>> dev1
         let username = auth.user.as_str();
         let password = auth.password.as_str();
 
@@ -368,13 +340,10 @@ impl CipherNode {
     ) {
         info!("requested register");
 
-<<<<<<< HEAD
-=======
         if self.authenticated{
             self.logout().await;
         }
 
->>>>>>> dev1
         let username = auth.user.as_str();
         let password = auth.password.as_str();
         let keybundle = auth.keybundle.unwrap();
