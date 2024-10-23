@@ -112,6 +112,8 @@ impl CipherNode {
             return;
         }
         
+        debug!("cleaning up({})...", self.username.clone().unwrap());
+
         let x = self.session_db.clone();
         x.lock().await.remove(&self.username.clone().unwrap());
 
@@ -130,6 +132,7 @@ impl CipherNode {
             match auth.action.as_str() {
                 "login" => self.login(auth, node_ref).await,
                 "register" => self.register(auth, node_ref).await,
+                "logout" => self.logout().await,
                 "fetch_bundle" => {
                     self.fetch_bundle(message.clone()).await
                 }
@@ -214,6 +217,11 @@ impl CipherNode {
     }
 
     async fn logout(&mut self){
+
+        if self.username.is_none() || self.authenticated == false{
+            return;
+        }
+
         let username = self.username.clone().unwrap();
         debug!("logging {} out", username);
 
