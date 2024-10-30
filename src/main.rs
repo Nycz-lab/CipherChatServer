@@ -56,6 +56,7 @@ mod util;
 mod server;
 mod node;
 
+/// Entrypoint des Programms
 #[tokio::main]
 async fn main() -> Result<(), Error> {
     let _ = env_logger::try_init();

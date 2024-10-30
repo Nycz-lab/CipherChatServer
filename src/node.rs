@@ -31,6 +31,9 @@ use tokio_rustls::{rustls, server::TlsStream, TlsAcceptor};
 use tokio_tungstenite::{tungstenite::Message, WebSocketStream};
 
 // #[derive(Clone)]
+/// Der CipherNode, welcher die WebSocket-Verbindung hält und die Nachrichten verarbeitet
+/// Dieser hält die WebSocket-Streams, die Session-Datenbank, die Benutzerdatenbank und die Nachrichtenwarteschlange
+/// Der CipherNode wird für jede Verbindung erstellt und verwaltet die Nachrichtenverarbeitung
 pub struct CipherNode {
     addr: SocketAddr,
     session_db: Arc<Mutex<HashMap<String, Arc<Mutex<CipherNode>>>>>,
@@ -45,6 +48,7 @@ pub struct CipherNode {
 }
 
 impl CipherNode {
+    /// Konstruktor, welcher ein neues CipherNode-Objekt erstellt
     pub fn new(
         addr: SocketAddr,
         session_db: Arc<Mutex<HashMap<String, Arc<Mutex<CipherNode>>>>>,
@@ -63,6 +67,8 @@ impl CipherNode {
         }
     }
 
+    /// Verarbeitet die eingehenden Nachrichten und leitet diese an die entsprechenden Funktionen weiter.
+    /// Diese Funktion läuft so lange, bis die Verbindung geschlossen wird.
     pub async fn process(mut self, ws_stream: WebSocketStream<TlsStream<TcpStream>>){
         
         info!("New WebSocket connection: {}", self.addr);
@@ -106,6 +112,7 @@ impl CipherNode {
         info!("connection ended");
     }
 
+    /// Bereinigt die Session-Datenbank, indem der Benutzer aus der Session-Datenbank entfernt wird
     pub async fn cleanup(&mut self) {
         // let x = session_db.WsSender.lock().await;
         if self.username.is_none(){
@@ -119,6 +126,7 @@ impl CipherNode {
 
     }
 
+    /// Verarbeitet die eingehenden Nachrichten und leitet diese an die entsprechenden Funktionen weiter.
     async fn message_handler(
         &mut self,
         mut message: MsgPayload,
@@ -145,6 +153,7 @@ impl CipherNode {
         }
     }
 
+    /// Sendet eine Nachricht über die WebSocket-Verbindung
     async fn send_message(&mut self, mut message: MsgPayload){
 
         let mut send_stream = self.ws_write.as_mut().unwrap().lock().await;
@@ -154,6 +163,8 @@ impl CipherNode {
         send_stream.send(Message::Text(json)).await.unwrap();
     }
 
+    /// Leitet die Nachricht an den Empfänger weiter
+    /// Wenn der Empfänger offline ist, wird die Nachricht in die Nachrichtenwarteschlange eingereiht
     async fn route_message(
         &mut self,
         mut message: MsgPayload
@@ -216,6 +227,7 @@ impl CipherNode {
         // TODO proper error handling and shit
     }
 
+    /// Loggt einen User aus
     async fn logout(&mut self){
 
         if self.username.is_none() || self.authenticated == false{
@@ -236,6 +248,7 @@ impl CipherNode {
 
     }
 
+    /// Loggt einen User ein
     async fn login(
         &mut self,
         auth: OpAuthPayload,
@@ -325,6 +338,7 @@ impl CipherNode {
         }
     }
 
+    /// Authentifiziert einen User (Der Websocket Stream wird erhält erhöhte Privilegien)
     async fn authenticate(&mut self, username: String, node_ref: Arc<Mutex<CipherNode>>){
 
         self.authenticated = true;
@@ -341,6 +355,7 @@ impl CipherNode {
 
     }
 
+    /// Registriert einen neuen User über die Datenbank
     async fn register(
         &mut self,
         auth: OpAuthPayload,
@@ -413,6 +428,7 @@ impl CipherNode {
         }
     }
 
+    /// Fetches the keybundle of a user
     async fn fetch_bundle(
         &self,
         mut og_msg: MsgPayload
@@ -482,6 +498,7 @@ impl CipherNode {
         }
     }
 
+    /// Gibt den aktuellen Unix-Timestamp zurück
     fn getTimestamp(&self) -> u64 {
         let timestamp = SystemTime::now()
             .duration_since(UNIX_EPOCH)

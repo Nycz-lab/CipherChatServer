@@ -33,6 +33,8 @@ use tokio::time;
 use tokio_rustls::{rustls, server::TlsStream, TlsAcceptor};
 use tokio_tungstenite::{tungstenite::Message, WebSocketStream};
 
+/// Der CipherServer, welcher die eingehenden Verbindungen akzeptiert und verwaltet
+/// Dieser hält die Session-Datenbank, die Benutzerdatenbank und die Nachrichtenwarteschlange
 pub struct CipherServer {
     session_db: Arc<Mutex<HashMap<String, Arc<Mutex<CipherNode>>>>>,
     user_db: Arc<Mutex<UserDatabase>>,
@@ -77,6 +79,7 @@ impl CipherServer {
     }
 }
 
+/// Akzeptiert eine eingehende Verbindung und erstellt einen neuen CipherNode
 pub async fn accept_connection(
     stream: TcpStream,
     addr: SocketAddr,

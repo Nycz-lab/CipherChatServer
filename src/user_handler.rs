@@ -15,19 +15,23 @@ use sha256::digest;
 
 use crate::util::{KeyBundle, KeyPairB64};
 
+/// Das User Datenbank Struct, welches die Verbindung zur SQLite Datenbank hält
+/// (Als Arc<Mutex<Connection>> um Threadsafe zu sein)
 pub struct UserDatabase {
     conn: Arc<Mutex<Connection>>,
 }
 
 impl UserDatabase {
+    /// Konstruktor, welcher die Verbindung zur Datenbank aufbaut
     pub async fn new() -> Self {
-        let conn = create_table_it_not_exist().await;
+        let conn = create_table_if_not_exist().await;
 
         UserDatabase {
             conn: Arc::new(Mutex::new(conn)),
         }
     }
 
+    /// Registriert einen neuen Benutzer in der Datenbank
     pub fn register_user(
         &self,
         username: String,
@@ -91,6 +95,7 @@ impl UserDatabase {
         Ok(uuid)
     }
 
+    /// Loggt einen Benutzer ein und gibt ein Token zurück
     pub fn login(&self, username: String, password: String) -> Result<Uuid, String> {
         let uuid = Uuid::new_v4();
 
@@ -114,6 +119,7 @@ impl UserDatabase {
         }
     }
 
+    /// Überprüft, ob ein Benutzer existiert
     pub fn user_exists(&self, username: String) -> bool{
 
         let conn = self.conn.lock().unwrap();
@@ -131,6 +137,7 @@ impl UserDatabase {
         false
     }
 
+    /// Funktion zum abfragen eines Keybundles zu einem spezifischen Benutzer
     pub fn fetch_bundle(&self, username: String) -> Result<KeyBundle, String> {
         let conn = self.conn.lock().unwrap();
 
@@ -176,7 +183,8 @@ impl UserDatabase {
     }
 }
 
-async fn create_table_it_not_exist() -> Connection {
+/// Funktion zum erstellen der Datenbank, falls diese noch nicht existiert
+async fn create_table_if_not_exist() -> Connection {
     if (Path::new("test.db").exists()) {
         let connection = Connection::open("test.db").unwrap();
         connection

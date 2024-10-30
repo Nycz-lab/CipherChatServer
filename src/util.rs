@@ -1,6 +1,7 @@
 use std::str::Utf8Error;
 
-
+/// Die Nachrichtenstruktur, die über die Websocket-Verbindung gesendet wird
+/// diese beinhaltet alle verwendeten Datentypen und wird als JSON serialisiert
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub struct MsgPayload{
   pub content: Option<MsgContent>,
@@ -11,6 +12,9 @@ pub struct MsgPayload{
   pub recipient: String
 }
 
+/// Operation-Authentifizierungs-Payload
+/// dieser wird verwendet, um die Authentifizierung zu überprüfen
+/// sowie für diverse Systemoperationen wie z.B Schlüsselaustausch
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub struct OpAuthPayload{
   pub action: String,
@@ -21,6 +25,8 @@ pub struct OpAuthPayload{
   pub success: Option<bool>,
 }
 
+/// Der letztendliche Nachrichteninhalt,
+/// dieser beinhaltet den verschlüsselten Text, den Nonce und den Klartext
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct MsgContent{
   pub ciphertext: String,
@@ -28,6 +34,7 @@ pub struct MsgContent{
   pub cleartext: Option<String>
 }
 
+/// Das Keybundle, welches die jeweiligen Schlüsselpaare beinhaltet
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct KeyBundle{
   pub identity: KeyPairB64,
@@ -37,6 +44,7 @@ pub struct KeyBundle{
   pub ephemeral_key: Option<KeyPairB64>
 }
 
+/// Ein Schlüsselpaar, welches als Base64-String gespeichert wird
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct KeyPairB64{
   pub public: String,
